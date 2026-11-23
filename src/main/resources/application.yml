@@ -2,13 +2,10 @@ server:
   port: ${SERVER_PORT:8080}
 
 spring:
-  application:
-    name: libraryapi
-
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:librarydb}}
-    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgres123}}
+    url: jdbc:postgresql://postgres:5432/librarydb
+    username: postgres
+    password: postgres123
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
