@@ -4,9 +4,9 @@ package bene.santos.com.br.libraryapi.config;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 
 @Configuration
 public class DataBaseConfiguration {
@@ -26,6 +26,7 @@ public class DataBaseConfiguration {
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()
+                .type(com.zaxxer.hikari.HikariDataSource.class)
                 .url(url)
                 .username(username)
                 .password(password)
