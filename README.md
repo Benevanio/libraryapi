@@ -198,33 +198,6 @@ flowchart TD
 
 ---
 
-## 📁 Estrutura do Projeto
-
-```text
-libraryapi/
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # Pipeline de CI/CD completa do GitHub Actions
-├── .mvn/                        # Wrapper Maven
-├── src/
-│   ├── main/
-│   │   ├── java/                # Código-fonte Java da API
-│   │   └── resources/
-│   │       └── application.yml  # Configurações centralizadas com injeção de envs
-│   └── test/
-│       ├── java/                # Testes automatizados (JUnit 5 / Spring Boot Test)
-│       └── resources/
-│           └── application.yml  # Configurações de banco em memória para testes
-├── .dockerignore                # Arquivos ignorados no build Docker
-├── .env.example                 # Modelo documentado de variáveis de ambiente
-├── .gitignore                   # Arquivos ignorados pelo Git (inclui .env)
-├── docker-compose.yml           # Orquestração da API + PostgreSQL
-├── Dockerfile                   # Build multi-stage seguro (Alpine + non-root)
-├── pom.xml                      # Dependências e plugins do Maven
-└── README.md                    # Documentação do projeto
-```
-
----
 
 ## 🛠️ Comandos Docker Úteis
 
