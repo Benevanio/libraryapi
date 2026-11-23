@@ -6,7 +6,6 @@ spring:
     name: libraryapi
 
   datasource:
-    # URL configurável: pode receber a string completa ou usar os parâmetros individuais do Postgres
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:librarydb}}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgres123}}
