@@ -1,73 +1,73 @@
-
 services:
+  # ============================================================================
   # Banco de Dados PostgreSQL
+  # ============================================================================
   postgres:
     image: postgres:16-alpine
     container_name: libraryapi-postgres
     restart: unless-stopped
-
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME:-librarydb}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
-
     ports:
       - "${DB_PORT:-5433}:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-librarydb}"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
-
     networks:
       - library-network
 
-  # Aplicação Spring Boot
+  # ============================================================================
+  # Aplicação Spring Boot (Library API)
+  # ============================================================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
-
     container_name: libraryapi-app
     restart: unless-stopped
-
     depends_on:
       postgres:
         condition: service_healthy
-
+    env_file:
+      - .env
     environment:
-      SERVER_PORT: 8080
+      SERVER_PORT: ${SERVER_PORT:-8080}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-
+      # Na rede interna do Docker, o container acessa o PostgreSQL pelo hostname 'postgres' na porta 5432
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-librarydb}
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres123}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       JPA_SHOW_SQL: ${JPA_SHOW_SQL:-true}
       JPA_FORMAT_SQL: ${JPA_FORMAT_SQL:-true}
-
       DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
       DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
-
       JAVA_OPTS: ${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0}
-
     ports:
       - "${SERVER_PORT:-8080}:8080"
-
     networks:
       - library-network
 
+# ==============================================================================
+# Volumes Persistentes
+# ==============================================================================
 volumes:
   postgres_data:
     name: libraryapi_postgres_data
 
+# ==============================================================================
+# Redes Isoladas
+# ==============================================================================
 networks:
   library-network:
     name: libraryapi_network
