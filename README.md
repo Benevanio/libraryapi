@@ -168,33 +168,20 @@ $env:DB_HOST="localhost"
 
 ## 🔄 Esteira de CI/CD (GitHub Actions)
 
-O projeto conta com um fluxo de integração contínua profissional configurado em `.github/workflows/ci.yml`.
+O projeto conta com um fluxo de CI simples, direto e rápido configurado em `.github/workflows/ci.yml`.
 
 ```mermaid
-flowchart TD
-    A[Push / Pull Request] --> B[Job: Build & Testes]
-    subgraph Job1 [🧪 Build & Testes]
-      B --> C[Setup Java 17 Temurin]
-      C --> D[Subir PostgreSQL Service Container]
-      D --> E[Executar Maven clean verify]
-      E --> F[Publicar Relatórios de Teste Surefire]
-      F --> G[Gerar Resumo no GitHub Step Summary]
-    end
-    Job1 --> H[Job: Docker Pipeline]
-    subgraph Job2 [🐳 Docker Pipeline]
-      H --> I[Validar Sintaxe do docker-compose]
-      I --> J[Build Multi-Stage da Imagem Docker]
-      J --> K[Testar Inicialização Completa da Stack]
-      K --> L[Validar Healthcheck /actuator/health]
-      L --> M[Limpeza dos Contêineres]
-    end
+flowchart LR
+    A[Push / PR] --> B[Checkout]
+    B --> C[Setup Java 17]
+    C --> D[Maven Test & Verify]
+    D --> E[Docker Build]
 ```
 
-### Vantagens do CI Configurado:
-- **Cache Maven**: Baixa dependências uma única vez, acelerando as execuções.
-- **Service Container do PostgreSQL**: Testa a integração real contra uma instância isolada de banco de dados.
-- **Cache Docker GHA**: Otimização máxima de camadas no build do contêiner.
-- **Validação de Inicialização Real**: O CI não apenas compila, mas inicia a stack inteira e valida se o endpoint `/actuator/health` respondeu `UP`.
+### O que o CI faz:
+1. **Configura o Java 17 (Temurin)** com cache automático do Maven.
+2. **Executa a compilação e os testes automatizados** com `./mvnw clean verify`.
+3. **Valida o build da imagem Docker** com `docker build .`, garantindo que o contêiner sempre constrói sem quebrar.
 
 ---
 
