@@ -122,7 +122,7 @@ As variáveis de ambiente são centralizadas nos arquivos `.env` e mapeadas no `
 | `SERVER_PORT` | `8080` | Porta HTTP da aplicação |
 | `SPRING_PROFILES_ACTIVE` | `prod` | Perfil ativo do Spring Boot |
 | `DB_HOST` | `postgres` | Host do banco (use `localhost` para dev local sem Docker) |
-| `DB_PORT` | `5432` | Porta do PostgreSQL |
+| `DB_PORT` | `5433` | Porta externa do PostgreSQL (5433 para evitar conflito com Postgres local) |
 | `DB_NAME` | `librarydb` | Nome do banco de dados |
 | `DB_USER` | `postgres` | Usuário do banco de dados |
 | `DB_PASSWORD` | `postgres123` | Senha do usuário do banco |
