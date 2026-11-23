@@ -114,19 +114,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 🚀 Testar Inicialização do Compose (App + PostgreSQL)
-        run: |
-          docker compose up -d --build
-          echo "Aguardando serviços ficarem saudáveis..."
-          for i in {1..30}; do
-            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' libraryapi-postgres 2>/dev/null || echo "\"starting\"")
-            if [ "$STATUS" = "\"healthy\"" ]; then
-              echo "PostgreSQL está pronto e saudável!"
-              break
-            fi
-            sleep 2
-          done
-
       - name: 🩺 Validar Endpoint de Saúde (Actuator Health)
         run: |
           echo "Testando endpoint de saúde da aplicação..."

@@ -25,7 +25,6 @@ spring:
     properties:
       hibernate:
         format_sql: ${JPA_FORMAT_SQL:true}
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 management:
   endpoints:
