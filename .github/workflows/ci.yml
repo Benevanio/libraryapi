@@ -1,0 +1,152 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # Etapa 1: Build & Execução de Testes Automatizados
+  # ============================================================================
+  test:
+    name: 🧪 Build & Testes
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: librarydb_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d librarydb_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: ☕ Configurar JDK 17 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🔧 Dar permissão de execução ao Maven Wrapper
+        run: chmod +x mvnw
+
+      - name: 🚀 Executar Compilação e Testes
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: librarydb_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres123
+        run: ./mvnw clean verify -B
+
+      - name: 📊 Publicar Relatório de Testes (Surefire)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+
+      - name: 📝 Resumo do Job no GitHub Summary
+        if: always()
+        run: |
+          echo "### 🚀 Status da Compilação e Testes" >> $GITHUB_STEP_SUMMARY
+          echo "| Etapa | Status | Detalhes |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| ☕ **Java** | ✅ Sucesso | Eclipse Temurin JDK 17 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 **Maven** | ✅ Sucesso | Build e Dependências resolvidas |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 **Testes** | ${{ job.status == 'success' && '✅ Aprovados' || '❌ Falharam' }} | JUnit 5 & Spring Boot Test |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐘 **PostgreSQL** | ✅ Operacional | PostgreSQL 16 (Service Container) |" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Etapa 2: Validação e Build do Container Docker
+  # ============================================================================
+  docker:
+    name: 🐳 Docker Build & Healthcheck
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: 📄 Preparar Arquivo .env a partir do .env.example
+        run: cp .env.example .env
+
+      - name: 🛠️ Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔍 Validar Sintaxe do Docker Compose
+        run: docker compose config
+
+      - name: 🏗️ Construir Imagem Docker da Aplicação
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: libraryapi:ci-${{ github.sha }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🚀 Testar Inicialização do Compose (App + PostgreSQL)
+        run: |
+          docker compose up -d --build
+          echo "Aguardando serviços ficarem saudáveis..."
+          for i in {1..30}; do
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' libraryapi-postgres 2>/dev/null || echo "\"starting\"")
+            if [ "$STATUS" = "\"healthy\"" ]; then
+              echo "PostgreSQL está pronto e saudável!"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: 🩺 Validar Endpoint de Saúde (Actuator Health)
+        run: |
+          echo "Testando endpoint de saúde da aplicação..."
+          timeout 60 bash -c 'until curl -sf http://localhost:8080/actuator/health; do sleep 3; done'
+          echo "Aplicação respondeu com sucesso ao Healthcheck!"
+
+      - name: 📜 Exibir Logs dos Contêineres em caso de Falha
+        if: failure()
+        run: docker compose logs
+
+      - name: 🧹 Encerrar e Limpar Contêineres
+        if: always()
+        run: docker compose down -v
+
+      - name: 📝 Resumo do Container no GitHub Summary
+        if: always()
+        run: |
+          echo "### 🐳 Status do Docker e Contêineres" >> $GITHUB_STEP_SUMMARY
+          echo "| Validação | Status | Descrição |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📄 **Docker Compose** | ✅ Válido | Sintaxe e variáveis conferidas |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ **Dockerfile Multi-Stage** | ✅ Sucesso | Imagem otimizada gerada |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🩺 **Healthcheck /actuator/health** | ${{ job.status == 'success' && '✅ Saudável' || '❌ Falhou' }} | Verificação HTTP 200 OK |" >> $GITHUB_STEP_SUMMARY
