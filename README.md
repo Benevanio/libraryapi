@@ -173,15 +173,12 @@ O projeto conta com um fluxo de CI simples, direto e rápido configurado em `.gi
 ```mermaid
 flowchart LR
     A[Push / PR] --> B[Checkout]
-    B --> C[Setup Java 17]
-    C --> D[Maven Test & Verify]
-    D --> E[Docker Build]
+    B --> C[Docker Build]
 ```
 
 ### O que o CI faz:
-1. **Configura o Java 17 (Temurin)** com cache automático do Maven.
-2. **Executa a compilação e os testes automatizados** com `./mvnw clean verify`.
-3. **Valida o build da imagem Docker** com `docker build .`, garantindo que o contêiner sempre constrói sem quebrar.
+1. **Checkout do código**: Baixa o repositório na máquina virtual do GitHub Actions.
+2. **Build da imagem Docker**: Executa `docker build .`, que compila o projeto dentro do estágio builder do Dockerfile e valida a geração da imagem final.
 
 ---
 

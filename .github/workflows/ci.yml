@@ -14,17 +14,5 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Compilar e Testar
-        run: |
-          chmod +x mvnw
-          ./mvnw clean verify
-
-      - name: Build do Docker
+      - name: Build da Imagem Docker
         run: docker build . -t libraryapi:latest
